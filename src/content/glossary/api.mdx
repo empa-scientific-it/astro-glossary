@@ -1,0 +1,71 @@
+---
+title: API
+description: Application Programming Interface - a set of protocols and tools for building software applications
+placements:
+  - area: web-development
+    topic: backend
+  - area: web-development
+    topic: frontend
+aliases:
+  - Application Programming Interface
+  - Web API
+relatedTerms:
+  - react
+  - docker
+---
+
+An API (Application Programming Interface) defines how software components should interact. In web development, APIs typically refer to web services that enable communication between a client and server, or between different services.
+
+## Types of Web APIs
+
+### REST APIs
+Representational State Transfer APIs use standard HTTP methods and are stateless.
+
+```javascript
+// GET request example
+const response = await fetch('/api/users/123');
+const user = await response.json();
+```
+
+### GraphQL APIs
+A query language for APIs that lets clients request exactly what they need.
+
+```graphql
+query {
+  user(id: "123") {
+    name
+    email
+    posts {
+      title
+    }
+  }
+}
+```
+
+### WebSocket APIs
+Enable real-time, bidirectional communication between client and server.
+
+```javascript
+const ws = new WebSocket('wss://api.example.com/live');
+ws.onmessage = (event) => {
+  console.log('Received:', event.data);
+};
+```
+
+## Best Practices
+
+- **Versioning**: Include version in the URL (e.g., `/api/v1/users`)
+- **Consistent naming**: Use nouns for resources, verbs via HTTP methods
+- **Error handling**: Return meaningful error codes and messages
+- **Documentation**: Provide clear, up-to-date API documentation
+- **Authentication**: Implement proper auth (OAuth, API keys, JWT)
+
+## Common HTTP Methods
+
+| Method | Purpose |
+|--------|---------|
+| GET | Retrieve resources |
+| POST | Create new resources |
+| PUT | Update existing resources |
+| PATCH | Partial update |
+| DELETE | Remove resources |

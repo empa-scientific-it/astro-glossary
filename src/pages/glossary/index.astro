@@ -1,0 +1,86 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { getCollection } from "astro:content";
+import { getSortedAreas, getSortedTopics } from "../../config/glossary";
+import Area from "../../components/glossary/Area.astro";
+
+// Fetch all glossary terms
+const allTerms = await getCollection("glossary");
+
+// Build a map of terms by area and topic for efficient lookup
+type TermEntry = (typeof allTerms)[number];
+type TermsByPlacement = Map<string, Map<string, TermEntry[]>>;
+
+const termsByPlacement: TermsByPlacement = new Map();
+
+for (const term of allTerms) {
+    for (const placement of term.data.placements) {
+        const areaKey = placement.area;
+        const topicKey = placement.topic;
+
+        if (!termsByPlacement.has(areaKey)) {
+            termsByPlacement.set(areaKey, new Map());
+        }
+
+        const topicMap = termsByPlacement.get(areaKey)!;
+
+        if (!topicMap.has(topicKey)) {
+            topicMap.set(topicKey, []);
+        }
+        topicMap.get(topicKey)!.push(term);
+    }
+}
+
+// Sort terms alphabetically within each topic
+for (const topicMap of termsByPlacement.values()) {
+    for (const terms of topicMap.values()) {
+        terms.sort((a, b) => a.data.title.localeCompare(b.data.title));
+    }
+}
+
+// Get sorted areas for display
+const sortedAreas = getSortedAreas();
+
+// Generate headings for table of contents
+const headings = sortedAreas.flatMap((area) => [
+    { depth: 2, slug: area.slug, text: area.title },
+    ...getSortedTopics(area.slug).map((topic) => ({
+        depth: 3,
+        slug: `${area.slug}-${topic.slug}`,
+        text: topic.title,
+    })),
+]);
+---
+
+<StarlightPage
+    frontmatter={{
+        title: "Glossary",
+        description:
+            "A comprehensive glossary of technical terms organized by area and topic",
+    }}
+    headings={headings}
+>
+    <p class="intro">
+        Browse our comprehensive glossary of technical terms, organized by area
+        and topic.
+    </p>
+
+    {
+        sortedAreas.map((area) => (
+            <Area
+                slug={area.slug}
+                title={area.title}
+                description={area.description}
+                termsByTopic={termsByPlacement.get(area.slug) || new Map()}
+            />
+        ))
+    }
+</StarlightPage>
+
+<style>
+    .intro {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        color: var(--sl-color-gray-2);
+    }
+</style>

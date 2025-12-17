@@ -1,0 +1,51 @@
+---
+import Topic from "./Topic.astro";
+import { getSortedTopics } from "../../config/glossary";
+import type { CollectionEntry } from "astro:content";
+
+/**
+ * Renders an area section with all its topics.
+ * Top-level component for glossary index page.
+ */
+interface Props {
+  /** Area slug */
+  slug: string;
+  /** Display title */
+  title: string;
+  /** Area description */
+  description: string;
+  /** Map of topic slug -> terms for this area */
+  termsByTopic: Map<string, CollectionEntry<"glossary">[]>;
+}
+
+const { slug, title, description, termsByTopic } = Astro.props;
+const sortedTopics = getSortedTopics(slug);
+---
+
+<section class="area">
+  <h2 id={slug}>{title}</h2>
+  <p class="area-description">{description}</p>
+
+  {
+    sortedTopics.map((topic) => (
+      <Topic
+        area={slug}
+        slug={topic.slug}
+        title={topic.title}
+        description={topic.description}
+        terms={termsByTopic.get(topic.slug) || []}
+      />
+    ))
+  }
+</section>
+
+<style>
+  .area {
+    margin-bottom: 3rem;
+  }
+
+  .area-description {
+    color: var(--sl-color-gray-3);
+    margin-bottom: 1rem;
+  }
+</style>

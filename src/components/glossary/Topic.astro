@@ -1,0 +1,73 @@
+---
+import Term from "./Term.astro";
+import type { CollectionEntry } from "astro:content";
+
+/**
+ * Renders a topic section with its term list.
+ * Used within area sections on the glossary index.
+ */
+interface Props {
+  /** Area slug (for generating term URLs) */
+  area: string;
+  /** Topic slug */
+  slug: string;
+  /** Display title */
+  title: string;
+  /** Topic description */
+  description: string;
+  /** Terms belonging to this topic */
+  terms: CollectionEntry<"glossary">[];
+}
+
+const { area, slug, title, description, terms } = Astro.props;
+const headingId = `${area}-${slug}`;
+---
+
+<section class="topic">
+  <h3 id={headingId}>{title}</h3>
+  <p class="topic-description">{description}</p>
+
+  {
+    terms.length > 0 ? (
+      <ul class="term-list">
+        {terms.map((term) => (
+          <Term
+            id={term.id}
+            title={term.data.title}
+            description={term.data.description}
+            area={area}
+            topic={slug}
+          />
+        ))}
+      </ul>
+    ) : (
+      <p class="no-terms">No terms in this topic yet.</p>
+    )
+  }
+</section>
+
+<style>
+  .topic {
+    margin-left: 1rem;
+    margin-bottom: 2rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--sl-color-gray-5);
+  }
+
+  .topic-description {
+    color: var(--sl-color-gray-3);
+    margin-bottom: 1rem;
+  }
+
+  .term-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .no-terms {
+    color: var(--sl-color-gray-4);
+    font-style: italic;
+  }
+</style>

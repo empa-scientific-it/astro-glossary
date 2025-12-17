@@ -1,0 +1,57 @@
+---
+/**
+ * Renders a single glossary term card.
+ * Used in term listings within topics.
+ */
+interface Props {
+    /** Term ID (filename without extension) */
+    id: string;
+    /** Display title */
+    title: string;
+    /** Brief description */
+    description: string;
+    /** Area slug for URL */
+    area: string;
+    /** Topic slug for URL */
+    topic: string;
+}
+
+const { id, title, description, area, topic } = Astro.props;
+const href = `/glossary/${area}/${topic}/${id}`;
+---
+
+<li class="term-card">
+    <a href={href}>{title}</a>
+    <span class="term-description">{description}</span>
+</li>
+
+<style>
+    .term-card {
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem 1rem;
+        background: var(--sl-color-gray-6);
+        border-radius: 0.5rem;
+        transition: background-color 0.15s ease;
+    }
+
+    .term-card:hover {
+        background: var(--sl-color-gray-5);
+    }
+
+    .term-card a {
+        font-weight: 600;
+        color: var(--sl-color-text-accent);
+        text-decoration: none;
+    }
+
+    .term-card a:hover {
+        text-decoration: underline;
+    }
+
+    .term-description {
+        font-size: 0.9rem;
+        color: var(--sl-color-gray-2);
+        margin-top: 0.25rem;
+    }
+</style>

@@ -1,0 +1,64 @@
+---
+title: Docker
+description: Platform for developing, shipping, and running applications in isolated containers
+placements:
+  - area: devops
+    topic: containers
+  - area: web-development
+    topic: backend
+aliases:
+  - Docker Engine
+  - Docker Container
+relatedTerms:
+  - api
+externalLinks:
+  - title: Docker Documentation
+    url: https://docs.docker.com/
+  - title: Docker Hub
+    url: https://hub.docker.com/
+---
+
+Docker is an open platform for developing, shipping, and running applications using containerization technology. It enables you to separate your applications from your infrastructure so you can deliver software quickly.
+
+## Key Features
+
+- **Containerization**: Package applications with all their dependencies into standardized units
+- **Portability**: Run consistently across development, testing, and production environments
+- **Isolation**: Each container runs in its own isolated environment
+- **Efficiency**: Containers share the host OS kernel, making them lightweight compared to VMs
+
+## Basic Commands
+
+```bash
+# Build an image from a Dockerfile
+docker build -t myapp .
+
+# Run a container
+docker run -p 3000:3000 myapp
+
+# List running containers
+docker ps
+
+# Stop a container
+docker stop <container_id>
+```
+
+## Dockerfile Example
+
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+## Use Cases
+
+Docker is commonly used for:
+- Microservices architecture
+- Continuous integration/deployment pipelines
+- Development environment standardization
+- Application isolation and security
