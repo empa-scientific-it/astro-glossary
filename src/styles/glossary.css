@@ -1,0 +1,11 @@
+.glossary-term {
+  border-bottom: 1px dotted var(--sl-color-text);
+  text-decoration: none;
+  cursor: help;
+  color: var(--sl-color-text);
+}
+
+.glossary-term:hover {
+  border-bottom-style: solid;
+  background: var(--sl-color-accent-low);
+}

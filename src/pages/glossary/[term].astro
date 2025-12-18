@@ -1,0 +1,286 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { getCollection, render } from "astro:content";
+import { getArea, getTopic } from "../../config/glossary";
+import { buildBacklinks } from "../../utils/backlinks";
+
+type TermEntry = Awaited<ReturnType<typeof getCollection<"glossary">>>[number];
+
+export async function getStaticPaths() {
+    const allTerms = await getCollection("glossary");
+
+    // Build a map of term ID -> term for related term lookups
+    const termsById = new Map(allTerms.map((t) => [t.id, t]));
+
+    // One page per term (not per placement)
+    return allTerms.map((term) => ({
+        params: { term: term.id },
+        props: { term, termsById },
+    }));
+}
+
+interface Props {
+    term: TermEntry;
+    termsById: Map<string, TermEntry>;
+}
+
+const { term, termsById } = Astro.props;
+
+// Build backlinks map and get references to this term
+const backlinksMap = await buildBacklinks();
+const termBacklinks = backlinksMap.get(term.id) || [];
+
+// Render the MDX content
+const { Content, headings: contentHeadings } = await render(term);
+
+// Check if we have any "See Also" content
+const hasRelatedTerms =
+    term.data.relatedTerms && term.data.relatedTerms.length > 0;
+const hasExternalLinks =
+    term.data.externalLinks && term.data.externalLinks.length > 0;
+const hasBacklinks = termBacklinks.length > 0;
+const hasSeeAlso = hasRelatedTerms || hasExternalLinks || hasBacklinks;
+
+// Build augmented headings for TOC
+const headings = [
+    ...contentHeadings,
+    ...(hasSeeAlso ? [{ depth: 2, slug: "see-also", text: "See Also" }] : []),
+];
+
+// Simple sidebar - just link back to glossary
+const sidebar = [
+    {
+        label: "Glossary",
+        link: "/glossary/",
+    },
+];
+---
+
+<StarlightPage
+    frontmatter={{
+        title: term.data.title,
+        description: term.data.description,
+    }}
+    headings={headings}
+    sidebar={sidebar}
+>
+    <!-- Minimal breadcrumb -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/glossary/">Glossary</a>
+        <span class="separator">/</span>
+        <span class="current">{term.data.title}</span>
+    </nav>
+
+    <!-- Term description -->
+    <p class="term-description">{term.data.description}</p>
+
+    <!-- Placements as tags -->
+    <div class="placements">
+        {
+            term.data.placements.map((p) => {
+                const area = getArea(p.area);
+                const topic = getTopic(p.area, p.topic);
+                return (
+                    <a
+                        href={`/glossary/#${p.area}-${p.topic}`}
+                        class="placement-tag"
+                    >
+                        {area?.title} <span class="tag-separator">&rarr;</span>{" "}
+                        {topic?.title}
+                    </a>
+                );
+            })
+        }
+    </div>
+
+    <!-- Aliases -->
+    {
+        term.data.aliases && term.data.aliases.length > 0 && (
+            <div class="aliases">
+                <strong>Also known as:</strong> {term.data.aliases.join(", ")}
+            </div>
+        )
+    }
+
+    <!-- Main content -->
+    <div class="content">
+        <Content />
+    </div>
+
+    <!-- See Also section -->
+    {
+        hasSeeAlso && (
+            <section class="see-also">
+                <h2 id="see-also">See Also</h2>
+
+                {hasRelatedTerms && (
+                    <div class="link-group">
+                        <h3>Related Terms</h3>
+                        <ul>
+                            {term.data.relatedTerms!.map((slug) => {
+                                const relatedTerm = termsById.get(slug);
+                                if (!relatedTerm) return null;
+                                return (
+                                    <li>
+                                        <a href={`/glossary/${slug}/`}>
+                                            {relatedTerm.data.title}
+                                        </a>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                )}
+
+                {hasBacklinks && (
+                    <div class="link-group">
+                        <h3>Referenced In</h3>
+                        <ul>
+                            {termBacklinks.map((link) => (
+                                <li>
+                                    <a href={link.path}>{link.title}</a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {hasExternalLinks && (
+                    <div class="link-group">
+                        <h3>External Resources</h3>
+                        <ul>
+                            {term.data.externalLinks!.map((link) => (
+                                <li>
+                                    <a
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        {link.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </section>
+        )
+    }
+</StarlightPage>
+
+<style>
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .breadcrumb a {
+        color: var(--sl-color-text-accent);
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb .separator {
+        color: var(--sl-color-gray-4);
+    }
+
+    .breadcrumb .current {
+        color: var(--sl-color-gray-2);
+    }
+
+    .term-description {
+        font-size: 1.15rem;
+        color: var(--sl-color-gray-2);
+        margin-bottom: 1rem;
+    }
+
+    .placements {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--sl-color-gray-5);
+    }
+
+    .placement-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        background: var(--sl-color-gray-6);
+        border-radius: 1rem;
+        font-size: 0.85rem;
+        color: var(--sl-color-text);
+        text-decoration: none;
+        transition: background-color 0.15s ease;
+    }
+
+    .placement-tag:hover {
+        background: var(--sl-color-gray-5);
+        text-decoration: none;
+    }
+
+    .tag-separator {
+        color: var(--sl-color-gray-4);
+        font-size: 0.75rem;
+    }
+
+    .aliases {
+        color: var(--sl-color-gray-3);
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    .content {
+        margin-bottom: 2rem;
+    }
+
+    .see-also {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--sl-color-gray-5);
+    }
+
+    .see-also h2 {
+        font-size: 1.25rem;
+        margin: 0 0 1.5rem 0;
+    }
+
+    .link-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .link-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .link-group h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--sl-color-gray-2);
+        margin: 0 0 0.5rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .link-group ul {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+
+    .link-group li {
+        margin-bottom: 0.25rem;
+    }
+
+    .link-group a {
+        color: var(--sl-color-text-accent);
+    }
+</style>

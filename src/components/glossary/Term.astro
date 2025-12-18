@@ -10,14 +10,10 @@ interface Props {
     title: string;
     /** Brief description */
     description: string;
-    /** Area slug for URL */
-    area: string;
-    /** Topic slug for URL */
-    topic: string;
 }
 
-const { id, title, description, area, topic } = Astro.props;
-const href = `/glossary/${area}/${topic}/${id}`;
+const { id, title, description } = Astro.props;
+const href = `/glossary/${id}/`;
 ---
 
 <li class="term-card">
